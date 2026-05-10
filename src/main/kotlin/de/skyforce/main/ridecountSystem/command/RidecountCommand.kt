@@ -5,16 +5,18 @@ import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
-import java.util.UUID
 
 class RidecountCommand(
     private val storage: RidecountStorage
 ) : CommandExecutor {
 
+    private companion object {
+        const val PREFIX = "§8[§6Ridecount§8] §7"
+    }
+
     override fun onCommand(sender: CommandSender, cmd: Command, label: String, args: Array<out String>): Boolean {
         if (!sender.hasPermission("ridecount.admin")) {
-            sender.sendMessage("§cKeine Berechtigung.")
+            sender.sendMessage("${PREFIX}§cDafuer hast du keine Berechtigung.")
             return true
         }
 
@@ -31,7 +33,7 @@ class RidecountCommand(
 
     private fun showPlayerStats(sender: CommandSender, args: Array<out String>): Boolean {
         if (args.size < 2) {
-            sender.sendMessage("§cNutzung: /ridecount show <spieler>")
+            sender.sendMessage("${PREFIX}§cNutzung: §e/ridecount show <spieler>")
             return true
         }
 
@@ -39,26 +41,30 @@ class RidecountCommand(
         val player = Bukkit.getPlayer(playerName)
 
         if (player == null) {
-            sender.sendMessage("§cSpieler '$playerName' nicht online.")
+            sender.sendMessage("${PREFIX}§cSpieler '$playerName' ist nicht online.")
             return true
         }
 
         val stats = storage.getPlayerStats(player.uniqueId)
         if (stats.isEmpty()) {
-            sender.sendMessage("§e${player.name} hat noch keine Fahrten geloggt.")
+            sender.sendMessage("${PREFIX}§e${player.name} hat noch keine Ridecounts.")
             return true
         }
 
-        sender.sendMessage("§6=== Ridecount für ${player.name} ===")
-        stats.forEach { (attraction, count) ->
-            sender.sendMessage("§e$attraction§f: §a$count")
-        }
+        sender.sendMessage("§8§m----------------------------------------")
+        sender.sendMessage("§6Ridecounts von §e${player.name}")
+        stats.entries
+            .sortedByDescending { it.value }
+            .forEach { (attraction, count) ->
+                sender.sendMessage("§8- §e${formatAttraction(attraction)}§7: §a$count")
+            }
+        sender.sendMessage("§8§m----------------------------------------")
         return true
     }
 
     private fun clearPlayerStats(sender: CommandSender, args: Array<out String>): Boolean {
         if (args.size < 2) {
-            sender.sendMessage("§cNutzung: /ridecount clear <spieler> [attraktion]")
+            sender.sendMessage("${PREFIX}§cNutzung: §e/ridecount clear <spieler> [attraktion]")
             return true
         }
 
@@ -66,7 +72,7 @@ class RidecountCommand(
         val player = Bukkit.getPlayer(playerName)
 
         if (player == null) {
-            sender.sendMessage("§cSpieler '$playerName' nicht online.")
+            sender.sendMessage("${PREFIX}§cSpieler '$playerName' ist nicht online.")
             return true
         }
 
@@ -74,20 +80,32 @@ class RidecountCommand(
 
         if (attraction != null) {
             storage.clearPlayerAttraction(player.uniqueId, attraction)
-            sender.sendMessage("§a${player.name}'s Counts für '$attraction' gelöscht.")
+            sender.sendMessage("${PREFIX}§aEintrag fuer §e${formatAttraction(attraction)} §avon §e${player.name} §ageloescht.")
         } else {
             storage.clearPlayer(player.uniqueId)
-            sender.sendMessage("§a${player.name}'s alle Counts gelöscht.")
+            sender.sendMessage("${PREFIX}§aAlle Ridecounts von §e${player.name} §awurden geloescht.")
         }
         storage.save()
         return true
     }
 
     private fun showUsage(sender: CommandSender): Boolean {
-        sender.sendMessage("§6Ridecount-Befehle")
-        sender.sendMessage("§e/ridecount show <spieler>§f - Zeige Statistiken")
-        sender.sendMessage("§e/ridecount clear <spieler> [attraktion]§f - Lösche Counts")
+        sender.sendMessage("§8§m----------------------------------------")
+        sender.sendMessage("§6Ridecount - Befehle")
+        sender.sendMessage("§e/ridecount show <spieler> §7- Zeigt Ridecounts")
+        sender.sendMessage("§e/ridecount clear <spieler> [attraktion] §7- Loescht Ridecounts")
+        sender.sendMessage("§8§m----------------------------------------")
         return true
+    }
+
+    private fun formatAttraction(raw: String): String {
+        return raw
+            .replace('_', ' ')
+            .split(' ')
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            }
     }
 }
 
