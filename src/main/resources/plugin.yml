@@ -1,0 +1,20 @@
+name: Ridecount-System
+version: '${version}'
+description: Ridecount-System fuer Train-Schilder
+
+main: de.skyforce.main.ridecountSystem.RidecountSystem
+api-version: '1.21.11'
+load: POSTWORLD
+softdepend: [Train_Carts, TCCoasters]
+
+commands:
+  ridecount:
+    description: Verwalte Ridecount-Statistiken
+    usage: /ridecount <show|clear> <spieler> [attraktion]
+    permission: ridecount.admin
+
+permissions:
+  ridecount.admin:
+    description: Zugriff auf Ridecount-Admin-Commands
+    default: op
+
