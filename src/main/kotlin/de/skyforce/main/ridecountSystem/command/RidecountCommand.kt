@@ -5,10 +5,11 @@ import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
 
 class RidecountCommand(
     private val storage: RidecountStorage
-) : CommandExecutor {
+) : CommandExecutor, TabCompleter {
 
     private companion object {
         const val PREFIX = "§8[§6Ridecount§8] §7"
@@ -47,7 +48,7 @@ class RidecountCommand(
 
         val stats = storage.getPlayerStats(player.uniqueId)
         if (stats.isEmpty()) {
-            sender.sendMessage("${PREFIX}§e${player.name} hat noch keine Ridecounts.")
+            sender.sendMessage("${PREFIX}§e${player.name} hat noch keine Eintraege.")
             return true
         }
 
@@ -80,7 +81,7 @@ class RidecountCommand(
 
         if (attraction != null) {
             storage.clearPlayerAttraction(player.uniqueId, attraction)
-            sender.sendMessage("${PREFIX}§aEintrag fuer §e${formatAttraction(attraction)} §avon §e${player.name} §ageloescht.")
+            sender.sendMessage("${PREFIX}§aEintrag fuer §e${formatAttraction(attraction)} §abei §e${player.name} §ageloescht.")
         } else {
             storage.clearPlayer(player.uniqueId)
             sender.sendMessage("${PREFIX}§aAlle Ridecounts von §e${player.name} §awurden geloescht.")
@@ -92,10 +93,40 @@ class RidecountCommand(
     private fun showUsage(sender: CommandSender): Boolean {
         sender.sendMessage("§8§m----------------------------------------")
         sender.sendMessage("§6Ridecount - Befehle")
-        sender.sendMessage("§e/ridecount show <spieler> §7- Zeigt Ridecounts")
-        sender.sendMessage("§e/ridecount clear <spieler> [attraktion] §7- Loescht Ridecounts")
+        sender.sendMessage("§e/ridecount show <spieler> §7- Zeigt die Statistik")
+        sender.sendMessage("§e/ridecount clear <spieler> [attraktion] §7- Loescht Eintraege")
         sender.sendMessage("§8§m----------------------------------------")
         return true
+    }
+
+    override fun onTabComplete(
+        sender: CommandSender,
+        command: Command,
+        alias: String,
+        args: Array<out String>
+    ): List<String> {
+        if (!sender.hasPermission("ridecount.admin")) {
+            return emptyList()
+        }
+
+        return when (args.size) {
+            1 -> complete(args[0], listOf("show", "clear"))
+            2 -> complete(args[1], Bukkit.getOnlinePlayers().map { it.name }.sorted())
+            3 -> {
+                if (!args[0].equals("clear", ignoreCase = true)) {
+                    return emptyList()
+                }
+                val player = Bukkit.getPlayer(args[1]) ?: return emptyList()
+                val attractions = storage.getPlayerStats(player.uniqueId).keys.sorted()
+                complete(args[2], attractions)
+            }
+
+            else -> emptyList()
+        }
+    }
+
+    private fun complete(partial: String, values: List<String>): List<String> {
+        return values.filter { it.startsWith(partial, ignoreCase = true) }
     }
 
     private fun formatAttraction(raw: String): String {

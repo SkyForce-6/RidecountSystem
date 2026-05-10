@@ -30,6 +30,7 @@ class RidecountSystem : JavaPlugin() {
         // Registriere Commands
         val cmd = RidecountCommand(storage)
         getCommand("ridecount")?.setExecutor(cmd)
+        getCommand("ridecount")?.tabCompleter = cmd
 
         logger.info("Ridecount-System v${pluginMeta.version} aktiviert.")
 
