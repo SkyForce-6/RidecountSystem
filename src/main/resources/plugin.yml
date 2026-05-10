@@ -17,4 +17,7 @@ permissions:
   ridecount.admin:
     description: Zugriff auf Ridecount-Admin-Commands
     default: op
+  ridecount.sign.create:
+    description: Erlaubt das Erstellen von Ridecount-Schildern
+    default: op
 

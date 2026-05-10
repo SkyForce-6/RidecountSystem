@@ -8,6 +8,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.block.SignChangeEvent
 import org.bukkit.event.vehicle.VehicleMoveEvent
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -17,7 +18,44 @@ class RidecountSignListener(
     private val cooldownMs: Long = 2000L
 ) : Listener {
 
+    companion object {
+        const val PERMISSION_CREATE = "ridecount.sign.create"
+        private const val PREFIX = "§8[§6Ridecount§8] §7"
+    }
+
     private val signTriggerCooldown = ConcurrentHashMap<String, Long>()
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    fun onSignChange(event: SignChangeEvent) {
+        val line0 = event.getLine(0)?.trim() ?: return
+        val line1 = event.getLine(1)?.trim() ?: return
+        val line2 = event.getLine(2)?.trim() ?: return
+
+        val isTrainHeader = line0.equals("[train]", ignoreCase = true) ||
+                line0.equals("train", ignoreCase = true)
+
+        if (!isTrainHeader || !line1.equals("ridecount", ignoreCase = true)) {
+            return
+        }
+
+        val player = event.player
+
+        if (!player.hasPermission(PERMISSION_CREATE)) {
+            event.isCancelled = true
+            player.sendMessage("${PREFIX}§cDu hast keine Berechtigung, Ridecount-Schilder zu erstellen.")
+            event.block.breakNaturally()
+            return
+        }
+
+        if (line2.isBlank()) {
+            event.isCancelled = true
+            player.sendMessage("${PREFIX}§cBitte gib in Zeile 3 den Namen der Attraktion an.")
+            event.block.breakNaturally()
+            return
+        }
+
+        player.sendMessage("${PREFIX}§aRidecount-Schild für §e$line2 §aerfolgreich erstellt.")
+    }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onVehicleMove(event: VehicleMoveEvent) {
