@@ -2,6 +2,7 @@ package de.skyforce.main.ridecountSystem.listener
 
 import de.skyforce.main.ridecountSystem.service.RidecountService
 import de.skyforce.main.ridecountSystem.sign.RidecountSignDetector
+import org.bukkit.Material
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Minecart
 import org.bukkit.entity.Player
@@ -10,12 +11,15 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.SignChangeEvent
 import org.bukkit.event.vehicle.VehicleMoveEvent
+import org.bukkit.plugin.java.JavaPlugin
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 class RidecountSignListener(
+    private val plugin: JavaPlugin,
     private val ridecountService: RidecountService,
-    private val cooldownMs: Long = 2000L
+    private val cooldownMs: Long = 2000L,
+    private val handleVehicleMove: Boolean = true
 ) : Listener {
 
     companion object {
@@ -26,7 +30,7 @@ class RidecountSignListener(
     private val signTriggerCooldown = ConcurrentHashMap<String, Long>()
 
     @Suppress("DEPRECATION")
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun onSignChange(event: SignChangeEvent) {
         val line0 = event.getLine(0)?.trim() ?: return
         val line1 = event.getLine(1)?.trim() ?: return
@@ -45,9 +49,7 @@ class RidecountSignListener(
             event.isCancelled = true
             player.sendMessage("${PREFIX}§cDu hast keine Berechtigung, Ridecount-Schilder zu erstellen.")
             val block = event.block
-            org.bukkit.Bukkit.getScheduler().runTask(
-                org.bukkit.Bukkit.getPluginManager().getPlugin("Ridecount-System")!!
-            ) { _ -> block.type = org.bukkit.Material.AIR }
+            plugin.server.scheduler.runTask(plugin) { _ -> block.type = Material.AIR }
             return
         }
 
@@ -55,9 +57,7 @@ class RidecountSignListener(
             event.isCancelled = true
             player.sendMessage("${PREFIX}§cBitte gib in Zeile 3 den Namen der Attraktion an.")
             val block = event.block
-            org.bukkit.Bukkit.getScheduler().runTask(
-                org.bukkit.Bukkit.getPluginManager().getPlugin("Ridecount-System")!!
-            ) { _ -> block.type = org.bukkit.Material.AIR }
+            plugin.server.scheduler.runTask(plugin) { _ -> block.type = Material.AIR }
             return
         }
 
@@ -66,21 +66,17 @@ class RidecountSignListener(
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onVehicleMove(event: VehicleMoveEvent) {
+        if (!handleVehicleMove) return
+
         val vehicle = event.vehicle
-        if (vehicle !is Minecart) {
-            return
-        }
+        if (vehicle !is Minecart) return
 
         val from = event.from.block
         val to = event.to.block
-        if (from.x == to.x && from.y == to.y && from.z == to.z) {
-            return
-        }
+        if (from.x == to.x && from.y == to.y && from.z == to.z) return
 
         val attraction = RidecountSignDetector.findAttraction(to) ?: return
-        if (attraction.isBlank()) {
-            return
-        }
+        if (attraction.isBlank()) return
 
         val vehicleId = vehicle.uniqueId
         val worldId = to.world.uid
@@ -89,9 +85,7 @@ class RidecountSignListener(
 
         val lastTrigger = signTriggerCooldown[cooldownKey] ?: 0L
         val now = System.currentTimeMillis()
-        if (now - lastTrigger < cooldownMs) {
-            return
-        }
+        if (now - lastTrigger < cooldownMs) return
 
         val playersInVehicle = collectPlayers(vehicle)
         val affected = ridecountService.incrementForPlayers(playersInVehicle, attraction)
@@ -106,17 +100,8 @@ class RidecountSignListener(
 
     private fun collectPlayers(entity: Entity): Set<UUID> {
         val players = mutableSetOf<UUID>()
-
-        if (entity is Player) {
-            players += entity.uniqueId
-        }
-
-        entity.passengers.forEach { passenger ->
-            players += collectPlayers(passenger)
-        }
-
+        if (entity is Player) players += entity.uniqueId
+        entity.passengers.forEach { players += collectPlayers(it) }
         return players
     }
-
 }
-

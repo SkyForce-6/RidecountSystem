@@ -22,10 +22,17 @@ class RidecountSystem : JavaPlugin() {
         trainCartsBridge.init()
 
         val trainCartsPlugin = server.pluginManager.getPlugin("Train_Carts")
-        if (trainCartsPlugin == null || !trainCartsPlugin.isEnabled) {
-            val fallbackListener = RidecountSignListener(service, config.getSignDuplicateCooldownMs())
-            server.pluginManager.registerEvents(fallbackListener, this)
-        }
+        val hasTrainCarts = trainCartsPlugin != null && trainCartsPlugin.isEnabled
+
+        // SignChangeEvent (Sign-Erstellung + Permission) immer registrieren
+        // VehicleMoveEvent immer aktiv - Cooldown verhindert Doppelzählung
+        val listener = RidecountSignListener(
+            plugin = this,
+            ridecountService = service,
+            cooldownMs = config.getSignDuplicateCooldownMs(),
+            handleVehicleMove = true
+        )
+        server.pluginManager.registerEvents(listener, this)
 
         // Registriere Commands
         val cmd = RidecountCommand(storage)
@@ -34,7 +41,7 @@ class RidecountSystem : JavaPlugin() {
 
         logger.info("Ridecount-System v${pluginMeta.version} aktiviert.")
 
-        if (trainCartsPlugin != null && trainCartsPlugin.isEnabled) {
+        if (hasTrainCarts) {
             logger.info("TrainCarts erkannt - API-Bridge aktiv, Bukkit-Fallback als Reserve.")
         } else {
             logger.info("TrainCarts nicht geladen - Fallback auf Event-System.")
