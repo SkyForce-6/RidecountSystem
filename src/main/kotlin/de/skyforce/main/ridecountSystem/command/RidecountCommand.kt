@@ -17,7 +17,7 @@ class RidecountCommand(
 
     override fun onCommand(sender: CommandSender, cmd: Command, label: String, args: Array<out String>): Boolean {
         if (!sender.hasPermission("ridecount.admin")) {
-            sender.sendMessage("${PREFIX}§cDafuer hast du keine Berechtigung.")
+            sender.sendMessage("${PREFIX}§cDafür hast du keine Berechtigung.")
             return true
         }
 
@@ -48,7 +48,7 @@ class RidecountCommand(
 
         val stats = storage.getPlayerStats(player.uniqueId)
         if (stats.isEmpty()) {
-            sender.sendMessage("${PREFIX}§e${player.name} hat noch keine Eintraege.")
+            sender.sendMessage("${PREFIX}§e${player.name} hat noch keine Einträge.")
             return true
         }
 
@@ -81,10 +81,10 @@ class RidecountCommand(
 
         if (attraction != null) {
             storage.clearPlayerAttraction(player.uniqueId, attraction)
-            sender.sendMessage("${PREFIX}§aEintrag fuer §e${formatAttraction(attraction)} §abei §e${player.name} §ageloescht.")
+            sender.sendMessage("${PREFIX}§aEintrag für §e${formatAttraction(attraction)} §abei §e${player.name} §agelöscht.")
         } else {
             storage.clearPlayer(player.uniqueId)
-            sender.sendMessage("${PREFIX}§aAlle Ridecounts von §e${player.name} §awurden geloescht.")
+            sender.sendMessage("${PREFIX}§aAlle Ridecounts von §e${player.name} §awurden gelöscht.")
         }
         storage.save()
         return true
@@ -94,7 +94,7 @@ class RidecountCommand(
         sender.sendMessage("§8§m----------------------------------------")
         sender.sendMessage("§6Ridecount - Befehle")
         sender.sendMessage("§e/ridecount show <spieler> §7- Zeigt die Statistik")
-        sender.sendMessage("§e/ridecount clear <spieler> [attraktion] §7- Loescht Eintraege")
+        sender.sendMessage("§e/ridecount clear <spieler> [attraktion] §7- Löscht Einträge")
         sender.sendMessage("§8§m----------------------------------------")
         return true
     }
