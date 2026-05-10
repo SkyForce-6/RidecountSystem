@@ -2,6 +2,7 @@ package de.skyforce.main.ridecountSystem
 
 import de.skyforce.main.ridecountSystem.command.RidecountCommand
 import de.skyforce.main.ridecountSystem.config.PluginConfig
+import de.skyforce.main.ridecountSystem.integration.TrainCartsApiBridge
 import de.skyforce.main.ridecountSystem.listener.RidecountSignListener
 import de.skyforce.main.ridecountSystem.service.RidecountService
 import de.skyforce.main.ridecountSystem.storage.YamlRidecountStorage
@@ -17,20 +18,23 @@ class RidecountSystem : JavaPlugin() {
         storage = YamlRidecountStorage(this, config.getStorageFileName())
         val service = RidecountService(storage, logger)
 
-        // Registeriere Event-Listener (funktioniert mit/ohne TrainCarts)
-        val listener = RidecountSignListener(service, config.getSignDuplicateCooldownMs())
-        server.pluginManager.registerEvents(listener, this)
+        val trainCartsBridge = TrainCartsApiBridge(this, service, config.getSignDuplicateCooldownMs())
+        trainCartsBridge.init()
+
+        val trainCartsPlugin = server.pluginManager.getPlugin("Train_Carts")
+        if (trainCartsPlugin == null || !trainCartsPlugin.isEnabled) {
+            val fallbackListener = RidecountSignListener(service, config.getSignDuplicateCooldownMs())
+            server.pluginManager.registerEvents(fallbackListener, this)
+        }
 
         // Registriere Commands
         val cmd = RidecountCommand(storage)
         getCommand("ridecount")?.setExecutor(cmd)
 
-        logger.info("Ridecount-System v${description.version} aktiviert.")
+        logger.info("Ridecount-System v${pluginMeta.version} aktiviert.")
 
-        // Prüfe TrainCarts Availability
-        val trainCartsPlugin = server.pluginManager.getPlugin("Train_Carts")
         if (trainCartsPlugin != null && trainCartsPlugin.isEnabled) {
-            logger.info("TrainCarts erkannt - optimale Sign-Integration aktiv.")
+            logger.info("TrainCarts erkannt - API-Bridge aktiv, Bukkit-Fallback als Reserve.")
         } else {
             logger.info("TrainCarts nicht geladen - Fallback auf Event-System.")
         }

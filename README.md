@@ -1,10 +1,10 @@
 # RidecountSystem
 
-Kleines Paper-Plugin fuer ein einfaches Ridecount-System mit Custom-Schild.
+Kleines Paper-Plugin für ein einfaches Ridecount-System mit Custom-Schild.
 
 ## Idee
 
-Wenn ein Zug ein passendes Schild ausloest, wird fuer alle Spieler im Zug der Count der angegebenen Attraktion erhoeht.
+Wenn ein Zug ein passendes Schild ausgelöst, wird für alle Spieler im Zug der Count der angegebenen Attraktion +1.
 
 Schildaufbau:
 
@@ -51,5 +51,6 @@ Das Plugin-Jar liegt danach unter:
 ## Hinweis
 
 `Train_Carts` und `TCCoasters` sind als Soft-Dependency eingetragen.
-Die Umsetzung nutzt aktuell Event-basiertes Sign-Handling.
+Wenn `Train_Carts` aktiv ist, nutzt das Plugin eine API-Bridge (MemberBlockChangeEvent).
+Ohne `Train_Carts` wird automatisch auf das normale Bukkit-Event-Fallback gewechselt.
 

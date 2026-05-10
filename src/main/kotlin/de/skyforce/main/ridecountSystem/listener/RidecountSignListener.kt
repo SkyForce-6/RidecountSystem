@@ -1,9 +1,7 @@
 package de.skyforce.main.ridecountSystem.listener
 
 import de.skyforce.main.ridecountSystem.service.RidecountService
-import org.bukkit.Tag
-import org.bukkit.block.Block
-import org.bukkit.block.Sign
+import de.skyforce.main.ridecountSystem.sign.RidecountSignDetector
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Minecart
 import org.bukkit.entity.Player
@@ -11,7 +9,6 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.vehicle.VehicleMoveEvent
-import org.bukkit.util.Vector
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -35,7 +32,7 @@ class RidecountSignListener(
             return
         }
 
-        val attraction = findRidecountAttraction(to)
+        val attraction = RidecountSignDetector.findAttraction(to) ?: return
         if (attraction.isBlank()) {
             return
         }
@@ -62,30 +59,6 @@ class RidecountSignListener(
         }
     }
 
-    private fun findRidecountAttraction(railBlock: Block): String {
-        if (!Tag.RAILS.isTagged(railBlock.type)) {
-            return ""
-        }
-
-        for (direction in CARDINAL_DIRECTIONS) {
-            val candidate = railBlock.getRelative(direction.blockX, direction.blockY, direction.blockZ)
-            val signState = candidate.state as? Sign ?: continue
-
-            val line0 = signState.getLine(0).trim()
-            val line1 = signState.getLine(1).trim()
-            val line2 = signState.getLine(2).trim()
-
-            val trainHeaderMatches = line0.equals("[train]", ignoreCase = true) ||
-                line0.equals("train", ignoreCase = true)
-
-            if (trainHeaderMatches && line1.equals("ridecount", ignoreCase = true) && line2.isNotEmpty()) {
-                return line2
-            }
-        }
-
-        return ""
-    }
-
     private fun collectPlayers(entity: Entity): Set<UUID> {
         val players = mutableSetOf<UUID>()
 
@@ -100,17 +73,5 @@ class RidecountSignListener(
         return players
     }
 
-    private companion object {
-        val CARDINAL_DIRECTIONS = listOf(
-            Vector(1, 0, 0),
-            Vector(-1, 0, 0),
-            Vector(0, 0, 1),
-            Vector(0, 0, -1),
-            Vector(1, -1, 0),
-            Vector(-1, -1, 0),
-            Vector(0, -1, 1),
-            Vector(0, -1, -1)
-        )
-    }
 }
 
