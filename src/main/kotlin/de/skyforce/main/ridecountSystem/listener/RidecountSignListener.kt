@@ -25,6 +25,7 @@ class RidecountSignListener(
 
     private val signTriggerCooldown = ConcurrentHashMap<String, Long>()
 
+    @Suppress("DEPRECATION")
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun onSignChange(event: SignChangeEvent) {
         val line0 = event.getLine(0)?.trim() ?: return
@@ -43,14 +44,20 @@ class RidecountSignListener(
         if (!player.hasPermission(PERMISSION_CREATE)) {
             event.isCancelled = true
             player.sendMessage("${PREFIX}§cDu hast keine Berechtigung, Ridecount-Schilder zu erstellen.")
-            event.block.breakNaturally()
+            val block = event.block
+            org.bukkit.Bukkit.getScheduler().runTask(
+                org.bukkit.Bukkit.getPluginManager().getPlugin("Ridecount-System")!!
+            ) { _ -> block.type = org.bukkit.Material.AIR }
             return
         }
 
         if (line2.isBlank()) {
             event.isCancelled = true
             player.sendMessage("${PREFIX}§cBitte gib in Zeile 3 den Namen der Attraktion an.")
-            event.block.breakNaturally()
+            val block = event.block
+            org.bukkit.Bukkit.getScheduler().runTask(
+                org.bukkit.Bukkit.getPluginManager().getPlugin("Ridecount-System")!!
+            ) { _ -> block.type = org.bukkit.Material.AIR }
             return
         }
 
