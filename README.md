@@ -4,7 +4,7 @@ Paper-Plugin für ein Ridecount-System.
 
 ## Sign
 
-``text
+``
 [train]
 ridecount
 <attraktion>
