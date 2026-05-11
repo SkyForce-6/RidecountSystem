@@ -2,11 +2,11 @@
 
 Paper-Plugin für ein Ridecount-System.
 
+## Sign
 ```text
 [train]
 ridecount
-<attraction>
-```
+<attraktion>
 
 ## Commands
 
