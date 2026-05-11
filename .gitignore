@@ -1,0 +1,21 @@
+# Gradle / Build
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Lokale Env
+.env
+
+*.md
+*.txt
