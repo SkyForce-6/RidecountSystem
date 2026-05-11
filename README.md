@@ -1,6 +1,6 @@
 # Ridecount-System
 
-Paper/Kotlin-Plugin fuer ein einfaches Ridecount-System mit TrainCarts-Bezug.
+Paper-Plugin für ein Ridecount-System.
 
 ```text
 [train]
@@ -27,7 +27,7 @@ ridecount.sign.create
 
 ## Build
 
-Voraussetzung: Java 21.
+Java 21.
 
 ```powershell
 .\gradlew.bat clean build
