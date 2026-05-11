@@ -1,49 +1,56 @@
 package de.skyforce.main.ridecountSystem.integration
 
 import de.skyforce.main.ridecountSystem.service.RidecountService
+import de.skyforce.main.ridecountSystem.service.RidecountTriggerCooldown
 import de.skyforce.main.ridecountSystem.sign.RidecountSignDetector
+import de.skyforce.main.ridecountSystem.util.PassengerCollector
+import org.bukkit.Tag
+import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Minecart
-import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.server.PluginEnableEvent
 import org.bukkit.plugin.java.JavaPlugin
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 class TrainCartsApiBridge(
     private val plugin: JavaPlugin,
     private val ridecountService: RidecountService,
-    private val cooldownMs: Long
+    private val triggerCooldown: RidecountTriggerCooldown,
+    private val onNativeBridgeEnabled: () -> Unit = {}
 ) : Listener {
 
-    private val triggerCooldown = ConcurrentHashMap<String, Long>()
     private var registeredToTcEvent = false
 
-    fun init() {
+    fun init(): Boolean {
         plugin.server.pluginManager.registerEvents(this, plugin)
-        tryRegisterTrainCartsEvent()
+        return tryRegisterTrainCartsEvent()
     }
 
     @org.bukkit.event.EventHandler(ignoreCancelled = true)
     fun onPluginEnable(event: PluginEnableEvent) {
         if (!registeredToTcEvent && event.plugin.name.equals("Train_Carts", ignoreCase = true)) {
-            tryRegisterTrainCartsEvent()
+            if (tryRegisterTrainCartsEvent()) {
+                onNativeBridgeEnabled()
+            }
         }
     }
 
-    private fun tryRegisterTrainCartsEvent() {
+    private fun tryRegisterTrainCartsEvent(): Boolean {
+        if (registeredToTcEvent) {
+            return true
+        }
+
         val trainCartsPlugin = plugin.server.pluginManager.getPlugin("Train_Carts")
         if (trainCartsPlugin == null || !trainCartsPlugin.isEnabled) {
-            return
+            return false
         }
 
         try {
             val eventClass = Class.forName("com.bergerkiller.bukkit.tc.events.MemberBlockChangeEvent")
             if (!Event::class.java.isAssignableFrom(eventClass)) {
-                return
+                return false
             }
 
             @Suppress("UNCHECKED_CAST")
@@ -60,11 +67,14 @@ class TrainCartsApiBridge(
 
             registeredToTcEvent = true
             plugin.logger.info("TrainCarts API Bridge aktiv (MemberBlockChangeEvent).")
+            return true
         } catch (_: ClassNotFoundException) {
             plugin.logger.info("TrainCarts API Bridge: Event-Klasse nicht gefunden, nutze Bukkit-Fallback.")
         } catch (ex: Exception) {
             plugin.logger.warning("TrainCarts API Bridge konnte nicht registriert werden: ${ex.message}")
         }
+
+        return false
     }
 
     private fun handleMemberBlockChange(event: Event) {
@@ -75,27 +85,39 @@ class TrainCartsApiBridge(
             return
         }
 
-        val leadMinecart = minecarts.first()
-        val railBlock = leadMinecart.location.block
+        val railBlock = resolveRailBlock(event, minecarts.first()) ?: return
         val attraction = RidecountSignDetector.findAttraction(railBlock) ?: return
 
+        val players = PassengerCollector.collectPlayerIds(minecarts.flatMap { it.passengers })
         val trainKey = buildTrainKey(member, minecarts)
-        val signKey = "${railBlock.world.uid}:${railBlock.x}:${railBlock.y}:${railBlock.z}:$attraction"
-        val cooldownKey = "$trainKey:$signKey"
+        val allowed = triggerCooldown.isAllowed(
+            railBlock = railBlock,
+            attraction = attraction,
+            playerIds = players,
+            fallbackKey = trainKey
+        )
+        if (!allowed) return
 
-        val now = System.currentTimeMillis()
-        val last = triggerCooldown[cooldownKey] ?: 0L
-        if (now - last < cooldownMs) {
-            return
-        }
-
-        val players = collectPlayersFromMinecarts(minecarts)
         val affected = ridecountService.incrementForPlayers(players, attraction)
-        triggerCooldown[cooldownKey] = now
 
         if (affected > 0) {
             ridecountService.logger.fine("[TrainCarts API] +$affected fuer '$attraction' (train=$trainKey)")
         }
+    }
+
+    private fun resolveRailBlock(event: Event, fallbackMinecart: Minecart): Block? {
+        val eventBlock = invokeNoArg(event, "getToBlock") as? Block
+        if (eventBlock != null && Tag.RAILS.isTagged(eventBlock.type)) {
+            return eventBlock
+        }
+
+        val minecartBlock = fallbackMinecart.location.block
+        if (Tag.RAILS.isTagged(minecartBlock.type)) {
+            return minecartBlock
+        }
+
+        val blockBelow = minecartBlock.getRelative(0, -1, 0)
+        return blockBelow.takeIf { Tag.RAILS.isTagged(it.type) }
     }
 
     private fun extractGroupMinecarts(member: Any): List<Minecart> {
@@ -122,25 +144,6 @@ class TrainCartsApiBridge(
         }
 
         return groupName ?: minecarts.joinToString(",") { it.uniqueId.toString() }
-    }
-
-    private fun collectPlayersFromMinecarts(minecarts: List<Minecart>): Set<UUID> {
-        val players = mutableSetOf<UUID>()
-        minecarts.forEach { minecart ->
-            minecart.passengers.forEach { passenger ->
-                collectPlayersRecursive(passenger, players)
-            }
-        }
-        return players
-    }
-
-    private fun collectPlayersRecursive(entity: Entity, players: MutableSet<UUID>) {
-        if (entity is Player) {
-            players += entity.uniqueId
-            return
-        }
-
-        entity.passengers.forEach { passenger -> collectPlayersRecursive(passenger, players) }
     }
 
     private fun extractMinecart(source: Any?): Minecart? {

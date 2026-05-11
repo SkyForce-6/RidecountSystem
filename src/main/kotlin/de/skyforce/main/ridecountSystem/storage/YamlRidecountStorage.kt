@@ -1,5 +1,6 @@
 package de.skyforce.main.ridecountSystem.storage
 
+import de.skyforce.main.ridecountSystem.model.AttractionKey
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
@@ -25,10 +26,7 @@ class YamlRidecountStorage(
     }
 
     override fun increment(playerId: UUID, attraction: String): Int {
-        val normalizedAttraction = attraction
-            .trim()
-            .lowercase()
-            .replace(Regex("[^a-z0-9_-]"), "_")
+        val normalizedAttraction = AttractionKey.fromDisplayName(attraction)
         val path = "players.$playerId.$normalizedAttraction"
         val next = config.getInt(path, 0) + 1
         config.set(path, next)
@@ -56,10 +54,7 @@ class YamlRidecountStorage(
     }
 
     override fun clearPlayerAttraction(playerId: UUID, attraction: String) {
-        val normalizedAttraction = attraction
-            .trim()
-            .lowercase()
-            .replace(Regex("[^a-z0-9_-]"), "_")
+        val normalizedAttraction = AttractionKey.fromDisplayName(attraction)
         config.set("players.$playerId.$normalizedAttraction", null)
     }
 }

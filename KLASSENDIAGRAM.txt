@@ -1,0 +1,24 @@
+RidecountSystem
+  owns PluginConfig
+  owns YamlRidecountStorage
+  creates RidecountService
+  registers RidecountSignListener
+  registers TrainCartsApiBridge
+  registers RidecountCommand
+
+RidecountSignListener
+  depends on RidecountService
+  uses RidecountSignDetector
+
+TrainCartsApiBridge
+  depends on RidecountService
+  uses RidecountSignDetector
+
+RidecountService
+  depends on RidecountStorage
+
+RidecountStorage
+  implemented by YamlRidecountStorage
+
+RidecountCommand
+  depends on RidecountStorage

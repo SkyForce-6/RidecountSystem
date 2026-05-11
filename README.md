@@ -1,25 +1,11 @@
-# RidecountSystem
+# Ridecount-System
 
-Kleines Paper-Plugin für ein einfaches Ridecount-System mit Custom-Schild.
-
-## Idee
-
-Wenn ein Zug ein passendes Schild ausgelöst, wird für alle Spieler im Zug der Count der angegebenen Attraktion +1.
-
-Schildaufbau:
+Paper/Kotlin-Plugin fuer ein einfaches Ridecount-System mit TrainCarts-Bezug.
 
 ```text
 [train]
 ridecount
 <attraction>
-```
-
-Beispiel:
-
-```text
-[train]
-ridecount
-bluefire
 ```
 
 ## Commands
@@ -31,26 +17,29 @@ Permission: `ridecount.admin`
 /ridecount clear <spieler> [attraktion]
 ```
 
-## Speicherung
+## Permissions
 
-Die Daten werden in YAML gespeichert.
+```text
+ridecount.admin
+ridecount.sign.create
+```
 
-- Config: `plugins/Ridecount-System/config.yml`
-- Counts: `plugins/Ridecount-System/ridecounts.yml`
 
 ## Build
 
+Voraussetzung: Java 21.
+
 ```powershell
-.\gradlew.bat clean shadowJar
+.\gradlew.bat clean build
 ```
 
-Das Plugin-Jar liegt danach unter:
+```text
+build/libs/Ridecount-System-1.0-SNAPSHOT.jar
+```
 
-`build/libs/Ridecount-System-1.0-SNAPSHOT.jar`
+## Tests
 
-## Hinweis
+Unit-Tests:
 
-`Train_Carts` und `TCCoasters` sind als Soft-Dependency eingetragen.
-Wenn `Train_Carts` aktiv ist, nutzt das Plugin eine API-Bridge (MemberBlockChangeEvent).
-Ohne `Train_Carts` wird automatisch auf das normale Bukkit-Event-Fallback gewechselt.
-
+-AttractionKeyTest
+-RidecountServiceTest

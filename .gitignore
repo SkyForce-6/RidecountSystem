@@ -17,7 +17,5 @@ Thumbs.db
 # Lokale Env
 .env
 
-# Dokumentation vorerst nicht auf GitHub
-*.md
-*.txt
-
+.md
+.txt
