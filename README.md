@@ -3,11 +3,12 @@
 Paper-Plugin für ein Ridecount-System.
 
 ## Sign
-```text
+
+``text
 [train]
 ridecount
 <attraktion>
-
+``
 ## Commands
 
 Permission: `ridecount.admin`
