@@ -17,5 +17,5 @@ Thumbs.db
 # Lokale Env
 .env
 
-.md
-.txt
+*.md
+*.txt
