@@ -1,9 +1,9 @@
-package de.skyforce.main.ridecountSystem.listener
+package de.skyforce.main.ridecountsystem.listener
 
-import de.skyforce.main.ridecountSystem.service.RidecountService
-import de.skyforce.main.ridecountSystem.service.RidecountTriggerCooldown
-import de.skyforce.main.ridecountSystem.sign.RidecountSignDetector
-import de.skyforce.main.ridecountSystem.util.PassengerCollector
+import de.skyforce.main.ridecountsystem.service.RidecountService
+import de.skyforce.main.ridecountsystem.service.RidecountTriggerCooldown
+import de.skyforce.main.ridecountsystem.sign.RidecountSignDetector
+import de.skyforce.main.ridecountsystem.util.PassengerCollector
 import org.bukkit.Material
 import org.bukkit.Tag
 import org.bukkit.block.Block

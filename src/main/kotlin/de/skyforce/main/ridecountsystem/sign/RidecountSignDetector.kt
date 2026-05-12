@@ -1,4 +1,4 @@
-package de.skyforce.main.ridecountSystem.sign
+package de.skyforce.main.ridecountsystem.sign
 
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Tag

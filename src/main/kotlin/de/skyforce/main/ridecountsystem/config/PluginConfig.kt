@@ -1,25 +1,24 @@
-package de.skyforce.main.ridecountSystem.config
+package de.skyforce.main.ridecountsystem.config
 
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
+import java.util.logging.Level
 
-class PluginConfig(plugin: JavaPlugin) {
+class PluginConfig(private val plugin: JavaPlugin) {
 
     private val file: File = File(plugin.dataFolder, "config.yml")
     private val config: YamlConfiguration
 
     init {
-        if (!plugin.dataFolder.exists()) {
-            plugin.dataFolder.mkdirs()
+        if (!plugin.dataFolder.exists() && !plugin.dataFolder.mkdirs()) {
+            throw IllegalStateException("Konnte Plugin-Datenverzeichnis nicht erstellen: ${plugin.dataFolder.absolutePath}")
         }
 
         if (!file.exists()) {
             createDefaultConfig()
-            config = YamlConfiguration.loadConfiguration(file)
-        } else {
-            config = YamlConfiguration.loadConfiguration(file)
         }
+        config = YamlConfiguration.loadConfiguration(file)
     }
 
     private fun createDefaultConfig() {
@@ -32,7 +31,8 @@ class PluginConfig(plugin: JavaPlugin) {
         try {
             defaults.save(file)
         } catch (ex: Exception) {
-            ex.printStackTrace()
+            plugin.logger.log(Level.SEVERE, "Konnte Standard-Konfiguration nicht speichern: ${file.absolutePath}", ex)
+            throw IllegalStateException("Plugin-Konfiguration konnte nicht initialisiert werden.", ex)
         }
     }
 
@@ -49,7 +49,6 @@ class PluginConfig(plugin: JavaPlugin) {
     }
 
     fun getStorageFileName(): String {
-        return config.getString("storage.file-name", "ridecounts.yml")!!
+        return config.getString("storage.file-name", "ridecounts.yml") ?: "ridecounts.yml"
     }
 }
-

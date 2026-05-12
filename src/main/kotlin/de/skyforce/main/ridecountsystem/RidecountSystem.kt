@@ -1,12 +1,12 @@
-package de.skyforce.main.ridecountSystem
+package de.skyforce.main.ridecountsystem
 
-import de.skyforce.main.ridecountSystem.command.RidecountCommand
-import de.skyforce.main.ridecountSystem.config.PluginConfig
-import de.skyforce.main.ridecountSystem.integration.TrainCartsApiBridge
-import de.skyforce.main.ridecountSystem.listener.RidecountSignListener
-import de.skyforce.main.ridecountSystem.service.RidecountService
-import de.skyforce.main.ridecountSystem.service.RidecountTriggerCooldown
-import de.skyforce.main.ridecountSystem.storage.YamlRidecountStorage
+import de.skyforce.main.ridecountsystem.command.RidecountCommand
+import de.skyforce.main.ridecountsystem.config.PluginConfig
+import de.skyforce.main.ridecountsystem.integration.TrainCartsApiBridge
+import de.skyforce.main.ridecountsystem.listener.RidecountSignListener
+import de.skyforce.main.ridecountsystem.service.RidecountService
+import de.skyforce.main.ridecountsystem.service.RidecountTriggerCooldown
+import de.skyforce.main.ridecountsystem.storage.YamlRidecountStorage
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
 

@@ -1,4 +1,4 @@
-package de.skyforce.main.ridecountSystem.service
+package de.skyforce.main.ridecountsystem.service
 
 import org.bukkit.block.Block
 import java.util.UUID

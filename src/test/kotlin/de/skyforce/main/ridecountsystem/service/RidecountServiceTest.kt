@@ -1,7 +1,7 @@
-package de.skyforce.main.ridecountSystem.service
+package de.skyforce.main.ridecountsystem.service
 
-import de.skyforce.main.ridecountSystem.model.AttractionKey
-import de.skyforce.main.ridecountSystem.storage.RidecountStorage
+import de.skyforce.main.ridecountsystem.model.AttractionKey
+import de.skyforce.main.ridecountsystem.storage.RidecountStorage
 import java.util.UUID
 import java.util.logging.Logger
 import kotlin.test.Test
@@ -57,20 +57,25 @@ class RidecountServiceTest {
             return next
         }
 
-        override fun save() {
+        override fun save(): Boolean {
             saveCount++
+            return true
         }
 
         override fun getPlayerStats(playerId: UUID): Map<String, Int> {
             return values[playerId]?.toMap() ?: emptyMap()
         }
 
-        override fun clearPlayer(playerId: UUID) {
-            values.remove(playerId)
+        override fun getKnownPlayerIds(): Set<UUID> {
+            return values.keys
         }
 
-        override fun clearPlayerAttraction(playerId: UUID, attraction: String) {
-            values[playerId]?.remove(AttractionKey.fromDisplayName(attraction))
+        override fun clearPlayer(playerId: UUID): Boolean {
+            return values.remove(playerId) != null
+        }
+
+        override fun clearPlayerAttraction(playerId: UUID, attraction: String): Boolean {
+            return values[playerId]?.remove(AttractionKey.fromDisplayName(attraction)) != null
         }
     }
 }

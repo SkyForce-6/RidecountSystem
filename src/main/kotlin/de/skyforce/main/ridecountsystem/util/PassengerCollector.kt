@@ -1,4 +1,4 @@
-package de.skyforce.main.ridecountSystem.util
+package de.skyforce.main.ridecountsystem.util
 
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player

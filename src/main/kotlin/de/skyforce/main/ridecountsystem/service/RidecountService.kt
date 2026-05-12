@@ -1,6 +1,6 @@
-package de.skyforce.main.ridecountSystem.service
+package de.skyforce.main.ridecountsystem.service
 
-import de.skyforce.main.ridecountSystem.storage.RidecountStorage
+import de.skyforce.main.ridecountsystem.storage.RidecountStorage
 import java.util.UUID
 import java.util.logging.Logger
 

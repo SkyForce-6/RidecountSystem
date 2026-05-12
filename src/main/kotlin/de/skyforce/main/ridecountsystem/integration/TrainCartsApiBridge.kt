@@ -1,9 +1,9 @@
-package de.skyforce.main.ridecountSystem.integration
+package de.skyforce.main.ridecountsystem.integration
 
-import de.skyforce.main.ridecountSystem.service.RidecountService
-import de.skyforce.main.ridecountSystem.service.RidecountTriggerCooldown
-import de.skyforce.main.ridecountSystem.sign.RidecountSignDetector
-import de.skyforce.main.ridecountSystem.util.PassengerCollector
+import de.skyforce.main.ridecountsystem.service.RidecountService
+import de.skyforce.main.ridecountsystem.service.RidecountTriggerCooldown
+import de.skyforce.main.ridecountsystem.sign.RidecountSignDetector
+import de.skyforce.main.ridecountsystem.util.PassengerCollector
 import org.bukkit.Tag
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
@@ -13,6 +13,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.server.PluginEnableEvent
 import org.bukkit.plugin.java.JavaPlugin
+import java.util.logging.Level
 
 class TrainCartsApiBridge(
     private val plugin: JavaPlugin,
@@ -71,7 +72,7 @@ class TrainCartsApiBridge(
         } catch (_: ClassNotFoundException) {
             plugin.logger.info("TrainCarts API Bridge: Event-Klasse nicht gefunden, nutze Bukkit-Fallback.")
         } catch (ex: Exception) {
-            plugin.logger.warning("TrainCarts API Bridge konnte nicht registriert werden: ${ex.message}")
+            plugin.logger.log(Level.WARNING, "TrainCarts API Bridge konnte nicht registriert werden.", ex)
         }
 
         return false

@@ -2,7 +2,7 @@ name: Ridecount-System
 version: '${version}'
 description: Ridecount-System fuer Train-Schilder
 
-main: de.skyforce.main.ridecountSystem.RidecountSystem
+main: de.skyforce.main.ridecountsystem.RidecountSystem
 api-version: '1.21'
 load: POSTWORLD
 softdepend: [Train_Carts, TCCoasters]

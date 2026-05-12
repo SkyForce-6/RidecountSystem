@@ -1,4 +1,4 @@
-package de.skyforce.main.ridecountSystem.model
+package de.skyforce.main.ridecountsystem.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,5 +10,11 @@ class AttractionKeyTest {
         assertEquals("blue_fire", AttractionKey.fromDisplayName(" Blue Fire "))
         assertEquals("wildwasserbahn_1", AttractionKey.fromDisplayName("Wildwasserbahn #1"))
         assertEquals("tcc-coaster", AttractionKey.fromDisplayName("TCC-Coaster"))
+    }
+
+    @Test
+    fun `collapses repeated separators and trims unsafe edges`() {
+        assertEquals("space_mountain_2", AttractionKey.fromDisplayName(" !!Space   Mountain?? 2!! "))
+        assertEquals("", AttractionKey.fromDisplayName(" ### "))
     }
 }

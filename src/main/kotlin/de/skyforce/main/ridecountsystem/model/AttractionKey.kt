@@ -1,4 +1,4 @@
-package de.skyforce.main.ridecountSystem.model
+package de.skyforce.main.ridecountsystem.model
 
 object AttractionKey {
 
