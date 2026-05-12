@@ -6,6 +6,7 @@ import java.util.logging.Logger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class YamlRidecountStorageTest {
@@ -68,5 +69,17 @@ class YamlRidecountStorageTest {
         val storage = YamlRidecountStorage(file, logger)
 
         assertEquals(setOf(playerId), storage.getKnownPlayerIds())
+    }
+
+    @Test
+    fun `rejects empty normalized attraction keys`() {
+        val file = Files.createTempDirectory("ridecount-storage").resolve("ridecounts.yml").toFile()
+        val playerId = UUID.fromString("00000000-0000-0000-0000-000000000004")
+        val storage = YamlRidecountStorage(file, logger)
+
+        assertFailsWith<IllegalArgumentException> {
+            storage.increment(playerId, " ### ")
+        }
+        assertFalse(storage.clearPlayerAttraction(playerId, " ### "))
     }
 }

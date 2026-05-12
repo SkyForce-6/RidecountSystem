@@ -10,7 +10,8 @@ import org.bukkit.command.TabCompleter
 import java.util.UUID
 
 class RidecountCommand(
-    private val storage: RidecountStorage
+    private val storage: RidecountStorage,
+    private val playerDirectory: PlayerDirectory = BukkitPlayerDirectory
 ) : CommandExecutor, TabCompleter {
 
     private companion object {
@@ -19,7 +20,7 @@ class RidecountCommand(
 
     override fun onCommand(sender: CommandSender, cmd: Command, label: String, args: Array<out String>): Boolean {
         if (!sender.hasPermission("ridecount.admin")) {
-            sender.sendMessage("${PREFIX}\u00a7cDafuer hast du keine Berechtigung.")
+            sender.sendMessage("${PREFIX}\u00a7cDafür hast du keine Berechtigung.")
             return true
         }
 
@@ -41,7 +42,7 @@ class RidecountCommand(
         }
 
         val playerToken = args[1]
-        val player = resolvePlayer(playerToken)
+        val player = playerDirectory.resolvePlayer(playerToken, storage)
         if (player == null) {
             sender.sendMessage("${PREFIX}\u00a7cSpieler '$playerToken' wurde nicht gefunden.")
             return true
@@ -49,7 +50,7 @@ class RidecountCommand(
 
         val stats = storage.getPlayerStats(player.id)
         if (stats.isEmpty()) {
-            sender.sendMessage("${PREFIX}\u00a7e${player.displayName} hat noch keine Eintraege.")
+            sender.sendMessage("${PREFIX}\u00a7e${player.displayName} hat noch keine Einträge.")
             return true
         }
 
@@ -71,13 +72,13 @@ class RidecountCommand(
         }
 
         val playerToken = args[1]
-        val player = resolvePlayer(playerToken)
+        val player = playerDirectory.resolvePlayer(playerToken, storage)
         if (player == null) {
             sender.sendMessage("${PREFIX}\u00a7cSpieler '$playerToken' wurde nicht gefunden.")
             return true
         }
 
-        val attraction = if (args.size > 2) args[2] else null
+        val attraction = if (args.size > 2) args.drop(2).joinToString(" ") else null
         val changed = if (attraction != null) {
             storage.clearPlayerAttraction(player.id, attraction)
         } else {
@@ -85,13 +86,13 @@ class RidecountCommand(
         }
 
         if (!changed) {
-            sender.sendMessage("${PREFIX}\u00a7eKeine passenden Ridecount-Eintraege fuer \u00a7e${player.displayName}\u00a77 gefunden.")
+            sender.sendMessage("${PREFIX}\u00a7eKeine passenden Ridecount-Einträge für \u00a7e${player.displayName}\u00a77 gefunden.")
             return true
         }
 
         storage.save()
         if (attraction != null) {
-            sender.sendMessage("${PREFIX}\u00a7aEintrag fuer \u00a7e${formatAttraction(attraction)} \u00a7abei \u00a7e${player.displayName} \u00a7ageloescht.")
+            sender.sendMessage("${PREFIX}\u00a7aEintrag für \u00a7e${formatAttraction(attraction)} \u00a7abei \u00a7e${player.displayName} \u00a7ageloescht.")
         } else {
             sender.sendMessage("${PREFIX}\u00a7aAlle Ridecounts von \u00a7e${player.displayName} \u00a7awurden geloescht.")
         }
@@ -102,7 +103,7 @@ class RidecountCommand(
         sender.sendMessage("\u00a78\u00a7m----------------------------------------")
         sender.sendMessage("\u00a76Ridecount - Befehle")
         sender.sendMessage("\u00a7e/ridecount show <spieler|uuid> \u00a77- Zeigt die Statistik")
-        sender.sendMessage("\u00a7e/ridecount clear <spieler|uuid> [attraktion] \u00a77- Loescht Eintraege")
+        sender.sendMessage("\u00a7e/ridecount clear <spieler|uuid> [attraktion] \u00a77- Löscht Einträge")
         sender.sendMessage("\u00a78\u00a7m----------------------------------------")
         return true
     }
@@ -119,12 +120,12 @@ class RidecountCommand(
 
         return when (args.size) {
             1 -> complete(args[0], listOf("show", "clear"))
-            2 -> complete(args[1], knownPlayerSuggestions())
+            2 -> complete(args[1], playerDirectory.knownPlayerSuggestions(storage))
             3 -> {
                 if (!args[0].equals("clear", ignoreCase = true)) {
                     return emptyList()
                 }
-                val player = resolvePlayer(args[1]) ?: return emptyList()
+                val player = playerDirectory.resolvePlayer(args[1], storage) ?: return emptyList()
                 complete(args[2], storage.getPlayerStats(player.id).keys.sorted())
             }
 
@@ -136,7 +137,30 @@ class RidecountCommand(
         return values.filter { it.startsWith(partial, ignoreCase = true) }
     }
 
-    private fun resolvePlayer(playerToken: String): PlayerTarget? {
+    private fun formatAttraction(raw: String): String {
+        return raw
+            .replace('_', ' ')
+            .split(' ')
+            .filter { it.isNotBlank() }
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            }
+    }
+}
+
+data class PlayerTarget(
+    val id: UUID,
+    val displayName: String
+)
+
+interface PlayerDirectory {
+    fun resolvePlayer(playerToken: String, storage: RidecountStorage): PlayerTarget?
+    fun knownPlayerSuggestions(storage: RidecountStorage): List<String>
+}
+
+object BukkitPlayerDirectory : PlayerDirectory {
+
+    override fun resolvePlayer(playerToken: String, storage: RidecountStorage): PlayerTarget? {
         Bukkit.getPlayerExact(playerToken)?.let { player ->
             return PlayerTarget(player.uniqueId, player.name)
         }
@@ -166,7 +190,7 @@ class RidecountCommand(
         return isOnline || hasPlayedBefore()
     }
 
-    private fun knownPlayerSuggestions(): List<String> {
+    override fun knownPlayerSuggestions(storage: RidecountStorage): List<String> {
         val onlineNames = Bukkit.getOnlinePlayers().map { it.name }
         val storedNames = storage.getKnownPlayerIds().map { id ->
             Bukkit.getOfflinePlayer(id).name ?: id.toString()
@@ -181,19 +205,4 @@ class RidecountCommand(
             null
         }
     }
-
-    private fun formatAttraction(raw: String): String {
-        return raw
-            .replace('_', ' ')
-            .split(' ')
-            .filter { it.isNotBlank() }
-            .joinToString(" ") { part ->
-                part.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-            }
-    }
-
-    private data class PlayerTarget(
-        val id: UUID,
-        val displayName: String
-    )
 }

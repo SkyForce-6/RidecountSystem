@@ -5,6 +5,9 @@ import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.io.IOException
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -42,6 +45,7 @@ class YamlRidecountStorage(
 
     override fun increment(playerId: UUID, attraction: String): Int {
         val normalizedAttraction = AttractionKey.fromDisplayName(attraction)
+        require(normalizedAttraction.isNotEmpty()) { "Attraction key must not be empty." }
         val path = "players.$playerId.$normalizedAttraction"
         val next = config.getInt(path, 0) + 1
         config.set(path, next)
@@ -55,9 +59,18 @@ class YamlRidecountStorage(
         }
 
         return try {
-            config.save(file)
+            val tempFile = tempFile()
+            config.save(tempFile)
+            Files.move(
+                tempFile.toPath(),
+                file.toPath(),
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.ATOMIC_MOVE
+            )
             dirty = false
             true
+        } catch (_: AtomicMoveNotSupportedException) {
+            saveWithReplaceMove()
         } catch (ex: IOException) {
             logger.log(Level.SEVERE, "Konnte Ridecount-Datei nicht speichern: ${file.absolutePath}", ex)
             false
@@ -94,6 +107,9 @@ class YamlRidecountStorage(
 
     override fun clearPlayerAttraction(playerId: UUID, attraction: String): Boolean {
         val normalizedAttraction = AttractionKey.fromDisplayName(attraction)
+        if (normalizedAttraction.isEmpty()) {
+            return false
+        }
         val path = "players.$playerId.$normalizedAttraction"
         if (!config.contains(path)) {
             return false
@@ -106,6 +122,23 @@ class YamlRidecountStorage(
         }
         dirty = true
         return true
+    }
+
+    private fun saveWithReplaceMove(): Boolean {
+        return try {
+            val tempFile = tempFile()
+            config.save(tempFile)
+            Files.move(tempFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            dirty = false
+            true
+        } catch (ex: IOException) {
+            logger.log(Level.SEVERE, "Konnte Ridecount-Datei nicht speichern: ${file.absolutePath}", ex)
+            false
+        }
+    }
+
+    private fun tempFile(): File {
+        return File(file.parentFile ?: File("."), "${file.name}.tmp")
     }
 }
 

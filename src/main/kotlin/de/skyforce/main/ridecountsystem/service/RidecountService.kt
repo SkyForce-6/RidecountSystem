@@ -1,6 +1,7 @@
 package de.skyforce.main.ridecountsystem.service
 
 import de.skyforce.main.ridecountsystem.storage.RidecountStorage
+import de.skyforce.main.ridecountsystem.model.AttractionKey
 import java.util.UUID
 import java.util.logging.Logger
 
@@ -18,6 +19,10 @@ class RidecountService(
         val normalizedAttraction = attraction.trim()
         if (normalizedAttraction.isEmpty()) {
             logger.warning("Attraktionsname ist leer.")
+            return 0
+        }
+        if (AttractionKey.fromDisplayName(normalizedAttraction).isEmpty()) {
+            logger.warning("Attraktionsname enthaelt keine speicherbaren Zeichen: '$attraction'")
             return 0
         }
 

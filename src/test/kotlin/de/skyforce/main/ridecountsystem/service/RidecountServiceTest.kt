@@ -44,6 +44,17 @@ class RidecountServiceTest {
         assertEquals(emptyMap(), storage.getPlayerStats(player))
     }
 
+    @Test
+    fun `does not increment when attraction has no valid storage key`() {
+        val player = UUID.fromString("00000000-0000-0000-0000-000000000001")
+
+        val affected = service.incrementForPlayers(listOf(player), " ### ")
+
+        assertEquals(0, affected)
+        assertEquals(0, storage.saveCount)
+        assertEquals(emptyMap(), storage.getPlayerStats(player))
+    }
+
     private class InMemoryRidecountStorage : RidecountStorage {
         private val values = mutableMapOf<UUID, MutableMap<String, Int>>()
         var saveCount = 0

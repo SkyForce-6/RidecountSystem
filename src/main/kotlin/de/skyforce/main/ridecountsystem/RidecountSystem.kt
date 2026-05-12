@@ -10,7 +10,7 @@ import de.skyforce.main.ridecountsystem.storage.YamlRidecountStorage
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
 
-class RidecountSystem : JavaPlugin() {
+open class RidecountSystem : JavaPlugin() {
 
     private lateinit var storage: YamlRidecountStorage
     private lateinit var config: PluginConfig
@@ -33,20 +33,24 @@ class RidecountSystem : JavaPlugin() {
         val trainCartsBridge = TrainCartsApiBridge(
             plugin = this,
             ridecountService = service,
-            triggerCooldown = triggerCooldown
+            triggerCooldown = triggerCooldown,
+            onNativeBridgeEnabled = { listener.setVehicleMoveFallbackEnabled(false) }
         )
         val nativeTrainCartsBridgeActive = trainCartsBridge.init()
 
         val cmd = RidecountCommand(storage)
-        getCommand("ridecount")?.setExecutor(cmd)
-        getCommand("ridecount")?.tabCompleter = cmd
+        val ridecountCommand = requireNotNull(getCommand("ridecount")) {
+            "Command 'ridecount' ist nicht in plugin.yml registriert."
+        }
+        ridecountCommand.setExecutor(cmd)
+        ridecountCommand.tabCompleter = cmd
 
         scheduleAutoSave()
 
         logger.info("Ridecount-System v${pluginMeta.version} aktiviert.")
 
         if (nativeTrainCartsBridgeActive) {
-            logger.info("TrainCarts API-Bridge aktiv; Bukkit-Fallback bleibt als Reserve aktiv.")
+            logger.info("TrainCarts API-Bridge aktiv; Bukkit-Fallback deaktiviert.")
         } else {
             logger.info("TrainCarts API-Bridge nicht aktiv; Bukkit-Fallback verwendet VehicleMoveEvent.")
         }
