@@ -6,6 +6,7 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import org.bukkit.OfflinePlayer
 
 class RidecountCommand(
     private val storage: RidecountStorage
@@ -39,10 +40,10 @@ class RidecountCommand(
         }
 
         val playerName = args[1]
-        val player = Bukkit.getPlayer(playerName)
+        val player = resolvePlayer(playerName)
 
-        if (player == null) {
-            sender.sendMessage("${PREFIX}§cSpieler '$playerName' ist nicht online.")
+        if (!player.isKnown()) {
+            sender.sendMessage("${PREFIX}§cSpieler '$playerName' wurde nicht gefunden.")
             return true
         }
 
@@ -70,10 +71,10 @@ class RidecountCommand(
         }
 
         val playerName = args[1]
-        val player = Bukkit.getPlayer(playerName)
+        val player = resolvePlayer(playerName)
 
-        if (player == null) {
-            sender.sendMessage("${PREFIX}§cSpieler '$playerName' ist nicht online.")
+        if (!player.isKnown()) {
+            sender.sendMessage("${PREFIX}§cSpieler '$playerName' wurde nicht gefunden.")
             return true
         }
 
@@ -116,7 +117,10 @@ class RidecountCommand(
                 if (!args[0].equals("clear", ignoreCase = true)) {
                     return emptyList()
                 }
-                val player = Bukkit.getPlayer(args[1]) ?: return emptyList()
+                val player = resolvePlayer(args[1])
+                if (!player.isKnown()) {
+                    return emptyList()
+                }
                 val attractions = storage.getPlayerStats(player.uniqueId).keys.sorted()
                 complete(args[2], attractions)
             }
@@ -127,6 +131,14 @@ class RidecountCommand(
 
     private fun complete(partial: String, values: List<String>): List<String> {
         return values.filter { it.startsWith(partial, ignoreCase = true) }
+    }
+
+    private fun resolvePlayer(playerName: String): OfflinePlayer {
+        return Bukkit.getPlayerExact(playerName) ?: Bukkit.getOfflinePlayer(playerName)
+    }
+
+    private fun OfflinePlayer.isKnown(): Boolean {
+        return isOnline || hasPlayedBefore()
     }
 
     private fun formatAttraction(raw: String): String {

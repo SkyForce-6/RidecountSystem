@@ -28,7 +28,6 @@ class RidecountService(
             logger.finest("$playerId → $normalizedAttraction: $newCount")
         }
 
-        storage.save()
         return incrementedCount
     }
 }

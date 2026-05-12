@@ -13,7 +13,7 @@ class RidecountServiceTest {
     private val service = RidecountService(storage, Logger.getLogger("RidecountServiceTest"))
 
     @Test
-    fun `increments every player once and saves once`() {
+    fun `increments every player once without immediate save`() {
         val firstPlayer = UUID.fromString("00000000-0000-0000-0000-000000000001")
         val secondPlayer = UUID.fromString("00000000-0000-0000-0000-000000000002")
 
@@ -22,7 +22,7 @@ class RidecountServiceTest {
         assertEquals(2, affected)
         assertEquals(1, storage.getPlayerStats(firstPlayer)["blue_fire"])
         assertEquals(1, storage.getPlayerStats(secondPlayer)["blue_fire"])
-        assertEquals(1, storage.saveCount)
+        assertEquals(0, storage.saveCount)
     }
 
     @Test
